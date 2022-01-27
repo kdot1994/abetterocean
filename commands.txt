@@ -7,3 +7,20 @@ web3.eth.getAccounts().then(function(acc){ accounts = acc })
 accounts[0]
 
 web3.utils.fromWei(web3.eth.getBalance(accounts[0]), 'ether')
+
+instance.whitelistNgo(accounts[0])
+instance.createContract(10, 'test')
+
+99736469279999999990
+99733898599969999990
+99730621899969999990
+99728655879969999990
+
+web3.eth.getBalance(accounts[0])
+
+truffle migrate --reset
+let instance = await ABO.deployed()
+instance.whitelistNgo(accounts[1])
+instance.createContract(web3.utils.toWei(10), 'urlPointerToEvent', {from: accounts[3]})
+instance.getContracts()
+instance.donate(0, {from: accounts[3], value: web3.utils.toWei(10)})

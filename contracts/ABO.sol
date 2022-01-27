@@ -45,11 +45,11 @@ contract ABO {
     }
 
     function donate(uint _projectId) public payable{
-        require(msg.value == projectIdToContract[_projectId].donation);
-        address ngoAddress  = projectIdToContract[_projectId].ngoAddress;        
+        require(msg.value == projectIdToContract[_projectId].donation * (1 ether));        
         uint aboFee = msg.value * aboFeeInPercent / 100; 
         uint ngoAmount = msg.value - aboFee; 
         // make a payment to NGO
+        address ngoAddress  = projectIdToContract[_projectId].ngoAddress;
         payable(ngoAddress).transfer(ngoAmount);
         // make a payment ABO
         payable(betterOcean).transfer(aboFee);
