@@ -12,6 +12,7 @@ contract ABO {
     string public contract_text;
     string public label;
     uint public contract_value;
+    mapping(uint => abo_contract) projectIdToContract;
 
     struct abo_contract{
         string projectID;
@@ -34,7 +35,10 @@ contract ABO {
 
     function donor_accept(string memory _projectID, address _ngoID_a, string memory _ngoID, string memory _donorID, string memory _contract_text, string memory _label, uint _contract_value, bool _contract_valid, bool _contract_finished) public payable{
         require(msg.value >= 10 ether);
-        abo_contracts.push(abo_contract(_projectID, _ngoID_a, _ngoID, _donorID, _contract_text, _label, _contract_value, _contract_valid, _contract_finished));
+        abo_contract storage edit = projectIdToContract.get(_projectID);
+        edit.paid = true;
+
+        abo_contracts.push(abo_contract(_projectID, _ngoID_a, _ngoID, _donorID, _contract_text, _label, _contract_value, _contract_valid, _contract_finished)); //needs to modify not create new
         // actua; payment
     }
 
@@ -45,7 +49,9 @@ contract ABO {
     // function getUser(string memory _projectID) public view returns (string memory) {
     //     return abo_contracts[_projectID].projectID;
     // }
-
+    function transferC() external payable{
+        }
+    
     function transfer(address payable _receiver) external {
         _receiver.transfer(10 ether);
   }
