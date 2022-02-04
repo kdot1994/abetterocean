@@ -6,50 +6,94 @@ pragma abicoder v2;
 // Creating a contract
 contract ABO {	
     // Declaring variable
-    string public projectID;
-    string public ngoID;
-    string public donorID;
-    string public contract_text;
-    string public label;
-    uint public contract_value;
-    mapping(uint => abo_contract) projectIdToContract;
+    address public betterOcean = 0x86D15B422D924D9115986Dd7A87ee794CAF2cbaF;
+    mapping (address => bool) public ngoWallets;
+    mapping (uint => abo_contract) public projectIdToContract;
+    mapping (uint => ngoEvent) public eventIdToNgoEvent;
+    uint public nextProjectId = 0;
+    uint public nextEventId = 0;
+    uint public aboFeeInPercent = 2;
+
 
     struct abo_contract{
-        string projectID;
-        address ngoID;
-        string donorID;
-        string contract_text;
-        string label;
-        uint contract_value;
-        bool contract_valid;
-        bool contract_finished;
+        uint projectID;
+        address ngoAddress;
+        address donorAddress;
+        uint donation;
+        string pointer;
+        //bool paid;
+        //string label;
     }
 
-    abo_contract[] public abo_contracts;
-
-
-    function ngo_create(string memory _projectID, address _ngoID, string memory _donorID, string memory _contract_text, string memory _label, uint _contract_value, bool _contract_valid, bool _contract_finished) public {
-        abo_contracts.push(abo_contract(_projectID, _ngoID, _donorID, _contract_text, _label, _contract_value, _contract_valid, _contract_finished));
+    struct ngoEvent{
+        uint eventID;
+        uint projectID;
+        address ngoAddress;
+        //uint cost;
+        string urlToRealLiveData;
     }
 
-    function donor_accept(string memory _projectID, address _ngoID, string memory _donorID, string memory _contract_text, string memory _label, uint _contract_value, bool _contract_valid, bool _contract_finished) public payable{
-        require(msg.value >= 10 ether);
+    // abo_contract[] public abo_contracts;
 
-        abo_contracts.push(abo_contract(_projectID, _ngoID, _donorID, _contract_text, _label, _contract_value, _contract_valid, _contract_finished)); //needs to modify not create new
-        // actua; payment
+    modifier isBetterOcean() {
+        require(msg.sender == betterOcean);
+        _;
     }
 
-    function allcontracts() public view returns(abo_contract[] memory) {
-        return abo_contracts;
+    modifier isValidNgo() {
+        require(ngoWallets[msg.sender]);
+        _;
     }
 
-    // function getUser(string memory _projectID) public view returns (string memory) {
-    //     return abo_contracts[_projectID].projectID;
-    // }
-    function transferC() external payable{
+    function whitelistNgo(address _ngoAddress) isBetterOcean public {
+        ngoWallets[_ngoAddress] = true;
+    }
+
+    function createContract(uint _donation, string memory _pointer) isValidNgo public {
+        uint projectId = nextProjectId++;
+        projectIdToContract[projectId] = abo_contract(projectId, msg.sender, address(0), _donation, _pointer);
+    }
+
+    function getContracts() public view returns (abo_contract[] memory) {
+        abo_contract [] memory memoryArray = new abo_contract[](nextProjectId);
+        for(uint i = 0; i < nextProjectId; i++) {
+            memoryArray[i] = projectIdToContract[i];
         }
-    
-    function transfer(address payable _receiver) external {
-        _receiver.transfer(10 ether);
-  }
+        return memoryArray;
+    }
+
+    function donate(uint _projectId) public payable{
+        require(msg.value == projectIdToContract[_projectId].donation * (1 ether));        
+        uint aboFee = msg.value * aboFeeInPercent / 100; 
+        uint ngoAmount = msg.value - aboFee; 
+        // make a payment to NGO
+        address ngoAddress  = projectIdToContract[_projectId].ngoAddress;
+        payable(ngoAddress).transfer(ngoAmount);
+        // make a payment ABO
+        payable(betterOcean).transfer(aboFee);
+        abo_contract storage myContract = projectIdToContract[_projectId];
+        myContract.donorAddress = msg.sender;
+    } 
+
+    function logNgoEvent(uint _projectId, string memory _pointerToRealLiveData) public isValidNgo {
+        uint eventId = nextEventId++;
+        eventIdToNgoEvent[eventId] = ngoEvent(eventId, _projectId, msg.sender, _pointerToRealLiveData);
+
+    }
+
+    function getNgoEvents() public view returns (ngoEvent[] memory) {
+        ngoEvent [] memory eventLog = new ngoEvent[](nextEventId);
+        for(uint i = 0; i < nextEventId; i++) {
+            eventLog[i] = eventIdToNgoEvent[i];
+        }
+        return eventLog;
+    }
+
+    function getWallets() public view returns (ngoEvent[] memory) {
+        ngoEvent [] memory eventLog = new ngoEvent[](nextEventId);
+        for(uint i = 0; i < nextEventId; i++) {
+            eventLog[i] = eventIdToNgoEvent[i];
+        }
+        return eventLog;
+    }
 }
